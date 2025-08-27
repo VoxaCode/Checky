@@ -1,4 +1,4 @@
-package com.voxacode.checky.core;
+package com.voxacode.checky.core
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 
 import com.voxacode.checky.core.theme.CheckyAppTheme
 import com.voxacode.checky.core.nav.MainNavHost
-import com.voxacode.checky.home.presentation.HomeScreen
 
 class MainActivity : ComponentActivity() {
 

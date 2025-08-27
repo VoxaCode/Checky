@@ -1,6 +1,6 @@
-package com.voxacode.checky.core.nav;
+package com.voxacode.checky.core.nav
 
-import com.voxacode.checky.home.presentation.HomeScreen
+import com.voxacode.checky.home.presentation.ui.HomeScreen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

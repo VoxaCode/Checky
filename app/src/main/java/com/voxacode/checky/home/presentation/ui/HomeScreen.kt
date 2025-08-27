@@ -1,0 +1,432 @@
+package com.voxacode.checky.home.presentation.ui
+
+import com.voxacode.checky.R 
+import com.voxacode.checky.core.nav.MainRoutes
+import com.voxacode.checky.shared.components.AppLogoWithName
+import com.voxacode.checky.shared.components.SettingsIconButton
+import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeStart
+import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeMiddle
+import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeEnd
+import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeTopStart
+import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeTopEnd
+import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeBottomStart
+import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeBottomEnd
+
+import kotlin.OptIn
+import androidx.navigation.NavController
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue 
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.RowScope
+
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar 
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.TextField
+
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
+
+@Composable
+fun HomeScreen(navController: NavController) {
+    Scaffold(
+        topBar = { HomeTopAppBar(onSettingsClick = {}) }
+    ) { padding -> 
+        var showJoinSheet by rememberSaveable { mutableStateOf(false) }
+        var showCreateSheet by rememberSaveable { mutableStateOf(false) }
+       
+        StartOptions(
+            onJoinClick = { showJoinSheet = true },
+            onCreateClick = { showCreateSheet = true },
+            modifier = Modifier.padding(padding)
+        )
+        
+        if(showJoinSheet) JoinGameSheet(
+            onDismissRequest = { showJoinSheet = false }     
+        )
+        
+        if(showCreateSheet) CreateGameSheet(
+            onDismissRequest = { showCreateSheet = false }
+        )
+    }
+}
+
+
+@Composable
+private fun StartOptions(
+    onJoinClick: () -> Unit,
+    onCreateClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .fillMaxSize()
+            .padding(top = 96.dp)
+    ){
+        StartOptionButton(
+            iconRes = R.drawable.door_open_24px,
+            title = stringResource(id = R.string.join_game),
+            description = stringResource(id = R.string.start_options_join_button_description),
+            onClick = onJoinClick
+        )
+    
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        StartOptionButton(
+            iconRes = R.drawable.handyman_24px,
+            title = stringResource(id = R.string.create_game),
+            description = stringResource(id = R.string.start_options_create_button_description),
+            onClick = onCreateClick
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StartOptionButton(
+    iconRes: Int,
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = Modifier
+            .height(140.dp)
+            .width(340.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f)
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = iconRes),
+                    contentDescription = "Button's Icon",
+                    modifier = Modifier.size(72.dp)
+                )
+            }
+           
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(end = 4.dp)
+                    .weight(2f)  
+            ) {
+                Text(
+                    text = title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Text(
+                    text = description,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }   
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeTopAppBar(
+    modifier: Modifier = Modifier,
+    onSettingsClick: () -> Unit
+) {
+    TopAppBar(
+         modifier = modifier.height(112.dp),
+         title = { AppLogoAndName() },
+         actions = { HomeTopAppBarActions(onSettingsClick) }
+    )
+}
+
+@Composable
+private fun HomeTopAppBarActions(onSettingsClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+            .fillMaxHeight()
+            .padding(end = 8.dp)
+    ) {
+        SettingsIconButton(onClick = onSettingsClick)
+    }
+}
+
+@Composable
+private fun AppLogoAndName() {
+    AppLogoWithName(
+        horizontalArrangement = Arrangement.Start,
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun JoinGameSheet(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ModalBottomSheet(onDismissRequest = onDismissRequest) {
+        var enteredCode by rememberSaveable { mutableStateOf("") }
+        
+        Column(modifier = modifier.fillMaxWidth()) {
+            TextField(
+                value = enteredCode,
+                onValueChange = { enteredCode = it },
+                label = { Text("Enter Code") },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+            
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
+            ) {
+                Button(
+                    onClick = {}
+                ) {
+                    Text("Join")
+                }
+            }
+            
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreateGameSheet(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ModalBottomSheet(onDismissRequest = onDismissRequest) {
+        Column(modifier = Modifier.fillMaxWidth()){
+            PlayAsGameOption()
+            TimeControlGameOption()
+            
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .padding(horizontal = 24.dp)
+            ) {
+                var enabled by rememberSaveable { mutableStateOf(true) }
+                Text("CODE: ")
+                Button(
+                    enabled = enabled,
+                    onClick = { enabled = false }
+                ) {
+                    Text("Create")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameOption(
+    modifier: Modifier = Modifier,
+    title: String,
+    actions: @Composable () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .padding(16.dp)
+    ) {
+        Text(title)
+        actions()
+    }
+}
+
+@Composable
+private fun PlayAsGameOption(modifier: Modifier = Modifier) {
+    GameOption(
+        modifier = modifier,
+        title = stringResource(id = R.string.create_game_play_as_option_title)
+    ) {
+        IconWithTextButtonRow {
+            IconWithTextTonalButton(
+                onClick = {},
+                text = "Black",
+                shape = CustomSegmentedButtonShapeStart
+            )
+    
+            IconWithTextTonalButton(
+                onClick = {},
+                text = "White",
+                shape = CustomSegmentedButtonShapeEnd
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimeControlGameOption(modifier: Modifier = Modifier) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        GameOption(
+            modifier = modifier,
+            title = stringResource(id = R.string.create_game_time_control_option_title)
+        ) {
+        
+            IconWithTextButtonRow {
+                IconWithTextTonalButton(
+                    onClick = {},
+                    text = "10 min",
+                    shape = CustomSegmentedButtonShapeStart
+                )
+    
+                IconWithTextTonalButton(
+                    shape = CustomSegmentedButtonShapeEnd,
+                    onClick = { expanded = !expanded },
+                    iconRes = if(expanded) R.drawable.keyboard_arrow_down_24px
+                              else R.drawable.keyboard_arrow_down_24px
+                )
+            }
+        }
+        
+       AnimatedVisibility(expanded) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                IconWithTextButtonRow(spacedBy = 8.dp) {
+                    IconWithTextTonalButton(
+                        onClick = {},
+                        text = "1 min",
+                        modifier = Modifier.weight(1f),
+                        shape = CustomSegmentedButtonShapeTopStart
+                    )           
+                        
+                    IconWithTextTonalButton(
+                        onClick = {},
+                        text = "3 min",
+                        modifier = Modifier.weight(1f),
+                        shape = CustomSegmentedButtonShapeMiddle
+                    )           
+                    
+                    IconWithTextTonalButton(
+                        onClick = {},
+                        text = "5 min",
+                        modifier = Modifier.weight(1f),
+                        shape = CustomSegmentedButtonShapeTopEnd
+                    )           
+                }
+                      
+                IconWithTextButtonRow(spacedBy = 8.dp) {
+                    IconWithTextTonalButton(
+                        onClick = {},
+                        text = "10 min",
+                        modifier = Modifier.weight(1f),
+                        shape = CustomSegmentedButtonShapeBottomStart
+                    )           
+                        
+                    IconWithTextTonalButton(
+                        onClick = {},
+                        text = "20 min",
+                        modifier = Modifier.weight(1f),
+                        shape = CustomSegmentedButtonShapeMiddle
+                    )           
+                        
+                    IconWithTextTonalButton(
+                        onClick = {},
+                        text = "30 min",
+                        modifier = Modifier.weight(1f),
+                        shape = CustomSegmentedButtonShapeBottomEnd
+                    )           
+                }
+            }
+        }
+    }     
+}
+
+@Composable
+private fun IconWithTextButtonRow(
+    spacedBy: Dp = 4.dp,
+    content: @Composable RowScope.() -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(spacedBy),
+        content = content
+    )
+}
+
+@Composable 
+private fun IconWithTextTonalButton(
+    iconRes: Int? = null,
+    text: String? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    shape: Shape = MaterialTheme.shapes.small,
+    modifier: Modifier = Modifier
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = shape
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            iconRes?.let {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = iconRes),
+                    contentDescription = "Button Icon"
+                )
+            }
+           
+            text?.let { Text(text) }
+        }
+    }
+}
