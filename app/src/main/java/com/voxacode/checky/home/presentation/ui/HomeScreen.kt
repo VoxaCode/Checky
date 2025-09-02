@@ -60,7 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 @Composable
 fun HomeScreen(navController: NavController) {
     Scaffold(
-        topBar = { HomeTopAppBar(onSettingsClick = {}) }
+        topBar = { HomeTopAppBar(onSettingsClick = { navController.navigate(MainRoutes.Session.route) }) }
     ) { padding -> 
         var showJoinSheet by rememberSaveable { mutableStateOf(false) }
         var showCreateSheet by rememberSaveable { mutableStateOf(false) }
@@ -91,9 +91,10 @@ private fun StartOptions(
     Column(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(top = 96.dp)
+            .then(modifier)
     ){
         StartOptionButton(
             iconRes = R.drawable.door_open_24px,
@@ -119,13 +120,15 @@ fun StartOptionButton(
     iconRes: Int,
     title: String,
     description: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     FilledTonalButton(
         onClick = onClick,
         modifier = Modifier
             .height(140.dp)
             .width(340.dp)
+            .then(modifier)
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -173,9 +176,11 @@ fun HomeTopAppBar(
     onSettingsClick: () -> Unit
 ) {
     TopAppBar(
-         modifier = modifier.height(112.dp),
          title = { AppLogoAndName() },
-         actions = { HomeTopAppBarActions(onSettingsClick) }
+         actions = { HomeTopAppBarActions(onSettingsClick) },
+         modifier = Modifier
+             .height(112.dp)
+             .then(modifier)
     )
 }
 
@@ -186,7 +191,7 @@ private fun HomeTopAppBarActions(onSettingsClick: () -> Unit) {
         horizontalArrangement = Arrangement.End,
         modifier = Modifier
             .fillMaxHeight()
-            .padding(end = 8.dp)
+            .padding(end = 16.dp)
     ) {
         SettingsIconButton(onClick = onSettingsClick)
     }
@@ -209,7 +214,11 @@ private fun JoinGameSheet(
     ModalBottomSheet(onDismissRequest = onDismissRequest) {
         var enteredCode by rememberSaveable { mutableStateOf("") }
         
-        Column(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .then(modifier)
+        ) {
             TextField(
                 value = enteredCode,
                 onValueChange = { enteredCode = it },
@@ -225,7 +234,8 @@ private fun JoinGameSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .height(64.dp)
+                    .padding(horizontal = 24.dp)
             ) {
                 Button(
                     onClick = {}
@@ -245,7 +255,11 @@ private fun CreateGameSheet(
     modifier: Modifier = Modifier
 ) {
     ModalBottomSheet(onDismissRequest = onDismissRequest) {
-        Column(modifier = Modifier.fillMaxWidth()){
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(modifier)
+        ){
             PlayAsGameOption()
             TimeControlGameOption()
             
@@ -254,7 +268,7 @@ private fun CreateGameSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(72.dp)
+                    .height(64.dp)
                     .padding(horizontal = 24.dp)
             ) {
                 var enabled by rememberSaveable { mutableStateOf(true) }
@@ -281,8 +295,9 @@ private fun GameOption(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp)
-            .padding(16.dp)
+            .height(48.dp)
+            .padding(horizontal = 16.dp)
+            .then(modifier)
     ) {
         Text(title)
         actions()
@@ -315,9 +330,8 @@ private fun PlayAsGameOption(modifier: Modifier = Modifier) {
 private fun TimeControlGameOption(modifier: Modifier = Modifier) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = modifier) {
         GameOption(
-            modifier = modifier,
             title = stringResource(id = R.string.create_game_time_control_option_title)
         ) {
         
@@ -392,9 +406,11 @@ private fun TimeControlGameOption(modifier: Modifier = Modifier) {
 @Composable
 private fun IconWithTextButtonRow(
     spacedBy: Dp = 4.dp,
+    modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit
 ) {
     Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(spacedBy),
         content = content
     )

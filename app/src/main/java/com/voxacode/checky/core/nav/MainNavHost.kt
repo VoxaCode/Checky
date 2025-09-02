@@ -1,6 +1,7 @@
 package com.voxacode.checky.core.nav
 
 import com.voxacode.checky.home.presentation.ui.HomeScreen
+import com.voxacode.checky.session.presentation.ui.SessionScreen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,6 +23,10 @@ fun MainNavHost(
     ) {
         composable(route = MainRoutes.Home.route) { 
             HomeScreen(navController = navController)
+        }
+        
+        composable(route = MainRoutes.Session.route) { 
+            SessionScreen(navController = navController)
         }
     }
 }

@@ -6,11 +6,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-@Composable 
-fun SettingsIconButton(onClick: () -> Unit) {
+@Composable
+fun NavigateBackIconButton(onClick: () -> Unit) {
     IconButton(
-        onClick = onClick,
-        iconRes = R.drawable.settings_24px,
-        contentDescription = "Settings",
+        iconRes = R.drawable.arrow_back_24px,
+        contentDescription = "More",
+        onClick = onClick
     )
 }
+
