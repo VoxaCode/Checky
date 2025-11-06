@@ -10,7 +10,13 @@ import androidx.compose.ui.unit.dp
 fun NavigateBackIconButton(onClick: () -> Unit) {
     IconButton(
         iconRes = R.drawable.arrow_back_24px,
-        contentDescription = "More",
+        contentDescription = null,
+        onClick = onClick
+    )
+}
+
+entDescription = null,
+>>>>>>> 22fa990 (Implemented anonymous login)
         onClick = onClick
     )
 }

@@ -4,6 +4,11 @@ import com.voxacode.checky.R
 import com.voxacode.checky.core.nav.MainRoutes
 import com.voxacode.checky.shared.components.AppLogoWithName
 import com.voxacode.checky.shared.components.SettingsIconButton
+import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupViewModel
+import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState
+import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState.SetupComplete
+import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState.SetupOngoing
+import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState.Error
 import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeStart
 import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeMiddle
 import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeEnd
@@ -13,11 +18,15 @@ import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShape
 import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeBottomEnd
 
 import kotlin.OptIn
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue 
 
@@ -35,6 +44,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.heightIn
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -43,11 +54,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ModalBottomSheetProperties
 
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -58,19 +73,35 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    setupViewModel: AutomaticSetupViewModel = hiltViewModel()
+) {
     Scaffold(
-        topBar = { HomeTopAppBar(onSettingsClick = { navController.navigate(MainRoutes.Session.route) }) }
+        topBar = { 
+            HomeTopAppBar(
+                onSettingsClick = {
+                   navController.navigate(MainRoutes.Session.route) 
+                }
+            ) 
+        }
     ) { padding -> 
         var showJoinSheet by rememberSaveable { mutableStateOf(false) }
         var showCreateSheet by rememberSaveable { mutableStateOf(false) }
-       
+        val showAutomaticSetupSheet = derivedStateOf { setupViewModel.setupState.value !is SetupComplete }
+        val setupState by setupViewModel.setupState.collectAsState()
+        
         StartOptions(
             onJoinClick = { showJoinSheet = true },
             onCreateClick = { showCreateSheet = true },
             modifier = Modifier.padding(padding)
         )
         
+        if(showAutomaticSetupSheet.value) AutomaticSetupSheet(
+            setupState = setupState,
+            onRetryRequest = { setupViewModel.startAutomaticSetup() }
+        ) 
+      
         if(showJoinSheet) JoinGameSheet(
             onDismissRequest = { showJoinSheet = false }     
         )
@@ -78,6 +109,12 @@ fun HomeScreen(navController: NavController) {
         if(showCreateSheet) CreateGameSheet(
             onDismissRequest = { showCreateSheet = false }
         )
+
+        LaunchedEffect(Unit) {
+            if(!setupViewModel.isSignedIn()) {
+                setupViewModel.startAutomaticSetup()
+            }
+        }
     }
 }
 
@@ -139,7 +176,7 @@ fun StartOptionButton(
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = iconRes),
-                    contentDescription = "Button's Icon",
+                    contentDescription = null,
                     modifier = Modifier.size(72.dp)
                 )
             }
@@ -313,13 +350,13 @@ private fun PlayAsGameOption(modifier: Modifier = Modifier) {
         IconWithTextButtonRow {
             IconWithTextTonalButton(
                 onClick = {},
-                text = "Black",
+                text = stringResource(id = R.string.text_black),
                 shape = CustomSegmentedButtonShapeStart
             )
     
             IconWithTextTonalButton(
                 onClick = {},
-                text = "White",
+                text = stringResource(id = R.string.text_white),
                 shape = CustomSegmentedButtonShapeEnd
             )
         }
@@ -438,11 +475,201 @@ private fun IconWithTextTonalButton(
             iconRes?.let {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = iconRes),
-                    contentDescription = "Button Icon"
+                    contentDescription = null
                 )
             }
            
             text?.let { Text(text) }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AutomaticSetupSheet(
+    setupState: AutomaticSetupState,
+    onRetryRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ModalBottomSheet(
+        onDismissRequest = {},
+        dragHandle = null,
+        modifier = modifier,
+        properties = ModalBottomSheetProperties(
+            shouldDismissOnBackPress = false
+        ),
+        sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = false,
+            confirmValueChange = { false }
+        )
+    ) {
+        if(setupState is SetupOngoing) AutomaticSetupOngoingSheetContent()
+        else if(setupState is Error) AutomaticSetupFailedSheetContent(onRetryRequest)
+    }
+}
+
+@Composable
+private fun AutomaticSetupOngoingSheetContent(
+    modifier: Modifier = Modifier
+) {
+    AutomaticSetupSheetContentRow {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .weight(2f) 
+                .aspectRatio(1f)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.fillMaxSize(0.6f)
+            )
+        }
+        
+        Column(
+             verticalArrangement = Arrangement.Center,
+             horizontalAlignment = Alignment.Start,
+             modifier = Modifier.weight(8f)
+        ) {
+            Text( 
+                text = stringResource(id = R.string.automatic_setup_ongoing_title),
+                fontSize = 24.sp
+            )
+            
+            Text( 
+                text = stringResource(id = R.string.automatic_setup_ongoin_body),
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun AutomaticSetupFailedSheetContent(
+    onRetryRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AutomaticSetupSheetContentRow {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .weight(1.5f) 
+                .aspectRatio(1f)
+        ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(id = R.drawable.error_24px),
+                modifier = Modifier.fillMaxSize(0.9f),
+                contentDescription = null
+            )
+        }
+        
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .weight(6f)
+                .padding(start= 8.dp)
+        ) {
+            Text( 
+                text = stringResource(id = R.string.unexpected_error_title),
+                fontSize = 24.sp
+            )
+            
+            Text( 
+                text = stringResource(id = R.string.unexpected_error_body),
+                fontSize = 14.sp
+            )
+        }
+        
+        
+        Box(
+            contentAlignment = Alignment.BottomCenter,
+            modifier = Modifier
+                .weight(2.5f)
+                .aspectRatio(1f)
+        ) {
+            Button(onClick = onRetryRequest) {
+                Text(
+                    text = stringResource(id = R.string.retry)          
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AutomaticSetupSheetContentRow(
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(14.dp)
+            .then(modifier)
+    ) {
+        content()
+    }
+}tentRow {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .weight(1.5f) 
+                .aspectRatio(1f)
+        ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(id = R.drawable.error_24px),
+                modifier = Modifier.fillMaxSize(0.9f),
+                contentDescription = null
+            )
+        }
+        
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .weight(6f)
+                .padding(start= 8.dp)
+        ) {
+            Text( 
+                text = stringResource(id = R.string.unexpected_error_title),
+                fontSize = 24.sp
+            )
+            
+            Text( 
+                text = stringResource(id = R.string.unexpected_error_body),
+                fontSize = 14.sp
+            )
+        }
+        
+        
+        Box(
+            contentAlignment = Alignment.BottomCenter,
+            modifier = Modifier
+                .weight(2.5f)
+                .aspectRatio(1f)
+        ) {
+            Button(onClick = onRetryRequest) {
+                Text(
+                    text = stringResource(id = R.string.retry)          
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AutomaticSetupSheetContentRow(
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(14.dp)
+            .then(modifier)
+    ) {
+        content()
+    }
+>>>>>>> 22fa990 (Implemented anonymous login)
 }

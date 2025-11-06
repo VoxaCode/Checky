@@ -1,7 +1,9 @@
-
-plugins {
+plugins {  
     id("com.android.application")
     id("kotlin-android")
+    id("com.google.gms.google-services")
+    id("com.google.dagger.hilt.android")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -10,7 +12,7 @@ android {
     
     defaultConfig {
         applicationId = "com.voxacode.checky"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 34
         versionCode = 1
         versionName = "v1.0.0"
@@ -53,6 +55,11 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 dependencies {
 
+    //Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    
     //Jetpack Compose
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.compose.ui:ui")
@@ -66,8 +73,31 @@ dependencies {
     
     //Generating Material3 Theme
     implementation("com.materialkolor:material-kolor:1.5.1")
-    
+   
+    //Dagger Hilt
+    implementation("com.google.dagger:hilt-android:2.52")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    ksp("com.google.dagger:hilt-android-compiler:2.52")
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.appcompat:appcompat:1.2.0")
+    
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+
+}
+compat:1.2.0")
+=======
+    //Dagger Hilt
+    implementation("com.google.dagger:hilt-android:2.52")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    ksp("com.google.dagger:hilt-android-compiler:2.52")
+
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+    implementation("androidx.appcompat:appcompat:1.2.0")
+    
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    
+>>>>>>> 22fa990 (Implemented anonymous login)
 }

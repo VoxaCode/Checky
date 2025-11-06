@@ -11,6 +11,13 @@ fun SettingsIconButton(onClick: () -> Unit) {
     IconButton(
         onClick = onClick,
         iconRes = R.drawable.settings_24px,
-        contentDescription = "Settings",
+        contentDescription = null
+    )
+}
+
+Settings",
+=======
+        contentDescription = null,
+>>>>>>> 22fa990 (Implemented anonymous login)
     )
 }

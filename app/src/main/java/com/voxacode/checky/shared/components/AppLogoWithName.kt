@@ -39,10 +39,16 @@ fun AppLogoWithName(
         Icon(
             imageVector =  ImageVector.vectorResource(id = R.drawable.ic_app_logo),
             modifier = Modifier.size(logoSize),
-            contentDescription = "Checky Logo"
+            contentDescription = null
         ) 
          
         Text(
+            fontSize = nameSize,
+            text = stringResource(id = R.string.app_name)
+        ) 
+    }
+}
+  (
             fontSize = nameSize,
             text = stringResource(id = R.string.app_name)
         ) 

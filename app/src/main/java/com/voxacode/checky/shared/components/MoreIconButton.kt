@@ -10,7 +10,12 @@ import androidx.compose.ui.unit.dp
 fun MoreIconButton(onClick: () -> Unit) {
     IconButton(
         iconRes = R.drawable.more_vert_24px,
-        contentDescription = "More",
+        contentDescription = null,
+        onClick = onClick
+    )
+}
+tentDescription = null,
+>>>>>>> 22fa990 (Implemented anonymous login)
         onClick = onClick
     )
 }

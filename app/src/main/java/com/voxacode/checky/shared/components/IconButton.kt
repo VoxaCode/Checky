@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 fun IconButton(
     iconRes: Int,
     contentDescription: String? = null,
-    modifier: Modifier = Modifier.size(28.dp),
+    modifier: Modifier = Modifier.size(24.dp),
     onClick: () -> Unit
 ) {
     IconButton(
@@ -28,6 +28,11 @@ fun IconButton(
         Icon(
             imageVector = ImageVector.vectorResource(id = iconRes),
             contentDescription = contentDescription,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+         contentDescription = contentDescription,
             modifier = Modifier.fillMaxSize()
         )
     }
