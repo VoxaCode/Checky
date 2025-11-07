@@ -14,8 +14,3 @@ fun MoreIconButton(onClick: () -> Unit) {
         onClick = onClick
     )
 }
-tentDescription = null,
->>>>>>> 22fa990 (Implemented anonymous login)
-        onClick = onClick
-    )
-}

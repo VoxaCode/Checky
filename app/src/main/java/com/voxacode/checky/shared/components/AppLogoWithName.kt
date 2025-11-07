@@ -48,10 +48,4 @@ fun AppLogoWithName(
         ) 
     }
 }
-  (
-            fontSize = nameSize,
-            text = stringResource(id = R.string.app_name)
-        ) 
-    }
-}
   

@@ -10,11 +10,3 @@ plugins {
 tasks.register<Delete>("clean") {
     delete(rootProject.buildDir)
 }
-sion "4.4.3" apply false
-}
-
-
->>>>>>> 22fa990 (Implemented anonymous login)
-tasks.register<Delete>("clean") {
-    delete(rootProject.buildDir)
-}

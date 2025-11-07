@@ -15,9 +15,3 @@ fun NavigateBackIconButton(onClick: () -> Unit) {
     )
 }
 
-entDescription = null,
->>>>>>> 22fa990 (Implemented anonymous login)
-        onClick = onClick
-    )
-}
-

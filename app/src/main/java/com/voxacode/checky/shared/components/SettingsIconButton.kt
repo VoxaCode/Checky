@@ -14,10 +14,3 @@ fun SettingsIconButton(onClick: () -> Unit) {
         contentDescription = null
     )
 }
-
-Settings",
-=======
-        contentDescription = null,
->>>>>>> 22fa990 (Implemented anonymous login)
-    )
-}

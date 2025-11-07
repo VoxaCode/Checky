@@ -32,8 +32,4 @@ fun IconButton(
         )
     }
 }
-         contentDescription = contentDescription,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
-}
+       
