@@ -5,7 +5,9 @@ import com.voxacode.checky.auth.domain.repository.AuthRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.app.Application
+import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +26,7 @@ sealed class AutomaticSetupState {
 @HiltViewModel
 class AutomaticSetupViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val app: Application
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _setupState = MutableStateFlow<AutomaticSetupState>(
@@ -33,7 +35,7 @@ class AutomaticSetupViewModel @Inject constructor(
     )
     val setupState = _setupState.asStateFlow()
     
-    fun isSignedIn(): Boolean = authRepository.currentUser() != null
+    private fun isSignedIn(): Boolean = authRepository.currentUser() != null
     fun startAutomaticSetup() {
         if(_setupState.value is AutomaticSetupState.SetupOngoing) return
         else if(_setupState.value is AutomaticSetupState.SetupComplete) return
@@ -47,7 +49,7 @@ class AutomaticSetupViewModel @Inject constructor(
                 
             } catch(e: Exception) {
                 _setupState.value = AutomaticSetupState.Error(
-                    e.message ?: app.getString(R.string.unexpected_error_body)
+                    e.message ?: context.getString(R.string.unexpected_error_body)
                 )
             }
         }

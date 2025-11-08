@@ -9,6 +9,7 @@ import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState
 import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState.SetupComplete
 import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState.SetupOngoing
 import com.voxacode.checky.home.presentation.viewmodel.AutomaticSetupState.Error
+import com.voxacode.checky.home.presentation.viewmodel.NetworkMonitorViewModel
 import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeStart
 import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeMiddle
 import com.voxacode.checky.home.presentation.ui.theme.CustomSegmentedButtonShapeEnd
@@ -30,6 +31,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
@@ -46,6 +48,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.statusBarsPadding
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -71,49 +80,67 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Popup
 
 @Composable
 fun HomeScreen(
     navController: NavController,
+    networkViewModel: NetworkMonitorViewModel = hiltViewModel(),
     setupViewModel: AutomaticSetupViewModel = hiltViewModel()
 ) {
+    val isOnline by networkViewModel.isOnline.collectAsState()
+    val setupState by setupViewModel.setupState.collectAsState()
+    val showAutomaticSetupSheet by derivedStateOf { setupState is SetupOngoing || setupState is Error }
+    val startAutomaticSetup by derivedStateOf { isOnline && setupState !is SetupComplete }
+    var showJoinSheet by rememberSaveable { mutableStateOf(false) }
+    var showCreateSheet by rememberSaveable { mutableStateOf(false) }
+ 
     Scaffold(
         topBar = { 
             HomeTopAppBar(
                 onSettingsClick = {
-                   navController.navigate(MainRoutes.Session.route) 
+                    navController.navigate(MainRoutes.Session.route) 
                 }
             ) 
         }
     ) { padding -> 
-        var showJoinSheet by rememberSaveable { mutableStateOf(false) }
-        var showCreateSheet by rememberSaveable { mutableStateOf(false) }
-        val showAutomaticSetupSheet = derivedStateOf { setupViewModel.setupState.value !is SetupComplete }
-        val setupState by setupViewModel.setupState.collectAsState()
-        
+          
         StartOptions(
+            enabledJoin = isOnline,
+            enabledCreate = isOnline,
             onJoinClick = { showJoinSheet = true },
             onCreateClick = { showCreateSheet = true },
             modifier = Modifier.padding(padding)
         )
+             
+        OfflineBanner(
+            visible = !isOnline
+        )
         
-        if(showAutomaticSetupSheet.value) AutomaticSetupSheet(
+        if(showAutomaticSetupSheet) AutomaticSetupSheet(
             setupState = setupState,
+            enabledRetry = isOnline,
             onRetryRequest = { setupViewModel.startAutomaticSetup() }
-        ) 
+        )        
       
         if(showJoinSheet) JoinGameSheet(
+            enabledJoin = isOnline,
             onDismissRequest = { showJoinSheet = false }     
         )
         
         if(showCreateSheet) CreateGameSheet(
+            enabledCreate = isOnline,
             onDismissRequest = { showCreateSheet = false }
         )
 
-        LaunchedEffect(Unit) {
-            if(!setupViewModel.isSignedIn()) {
+        LaunchedEffect(startAutomaticSetup) {
+            if(startAutomaticSetup) {
                 setupViewModel.startAutomaticSetup()
             }
+        }
+        
+        LaunchedEffect(Unit) {
+            networkViewModel.startMonitoringNetwork()
         }
     }
 }
@@ -121,6 +148,8 @@ fun HomeScreen(
 
 @Composable
 private fun StartOptions(
+    enabledJoin: Boolean = true,
+    enabledCreate: Boolean = true,
     onJoinClick: () -> Unit,
     onCreateClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -134,6 +163,7 @@ private fun StartOptions(
             .then(modifier)
     ){
         StartOptionButton(
+            enabled = enabledJoin,
             iconRes = R.drawable.door_open_24px,
             title = stringResource(id = R.string.join_game),
             description = stringResource(id = R.string.start_options_join_button_description),
@@ -143,6 +173,7 @@ private fun StartOptions(
         Spacer(modifier = Modifier.height(8.dp))
         
         StartOptionButton(
+            enabled = enabledCreate,
             iconRes = R.drawable.handyman_24px,
             title = stringResource(id = R.string.create_game),
             description = stringResource(id = R.string.start_options_create_button_description),
@@ -154,6 +185,7 @@ private fun StartOptions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StartOptionButton(
+    enabled: Boolean = true,
     iconRes: Int,
     title: String,
     description: String,
@@ -161,6 +193,7 @@ fun StartOptionButton(
     modifier: Modifier = Modifier
 ) {
     FilledTonalButton(
+        enabled = enabled,
         onClick = onClick,
         modifier = Modifier
             .height(140.dp)
@@ -212,14 +245,16 @@ fun HomeTopAppBar(
     modifier: Modifier = Modifier,
     onSettingsClick: () -> Unit
 ) {
-    TopAppBar(
+      TopAppBar(
          title = { AppLogoAndName() },
          actions = { HomeTopAppBarActions(onSettingsClick) },
          modifier = Modifier
              .height(112.dp)
+             .padding(top = 4.dp)
              .then(modifier)
-    )
+      )
 }
+  
 
 @Composable
 private fun HomeTopAppBarActions(onSettingsClick: () -> Unit) {
@@ -238,13 +273,14 @@ private fun HomeTopAppBarActions(onSettingsClick: () -> Unit) {
 private fun AppLogoAndName() {
     AppLogoWithName(
         horizontalArrangement = Arrangement.Start,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize() 
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun JoinGameSheet(
+    enabledJoin: Boolean = true,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -275,6 +311,7 @@ private fun JoinGameSheet(
                     .padding(horizontal = 24.dp)
             ) {
                 Button(
+                    enabled = enabledJoin,
                     onClick = {}
                 ) {
                     Text("Join")
@@ -288,6 +325,7 @@ private fun JoinGameSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateGameSheet(
+    enabledCreate: Boolean = true,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -308,11 +346,9 @@ private fun CreateGameSheet(
                     .height(64.dp)
                     .padding(horizontal = 24.dp)
             ) {
-                var enabled by rememberSaveable { mutableStateOf(true) }
-                Text("CODE: ")
                 Button(
-                    enabled = enabled,
-                    onClick = { enabled = false }
+                    enabled = enabledCreate,
+                    onClick = {}
                 ) {
                     Text("Create")
                 }
@@ -350,13 +386,13 @@ private fun PlayAsGameOption(modifier: Modifier = Modifier) {
         IconWithTextButtonRow {
             IconWithTextTonalButton(
                 onClick = {},
-                text = stringResource(id = R.string.text_black),
+                text = stringResource(id = R.string.black),
                 shape = CustomSegmentedButtonShapeStart
             )
     
             IconWithTextTonalButton(
                 onClick = {},
-                text = stringResource(id = R.string.text_white),
+                text = stringResource(id = R.string.white),
                 shape = CustomSegmentedButtonShapeEnd
             )
         }
@@ -488,6 +524,7 @@ private fun IconWithTextTonalButton(
 @Composable
 private fun AutomaticSetupSheet(
     setupState: AutomaticSetupState,
+    enabledRetry: Boolean = true,
     onRetryRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -504,7 +541,10 @@ private fun AutomaticSetupSheet(
         )
     ) {
         if(setupState is SetupOngoing) AutomaticSetupOngoingSheetContent()
-        else if(setupState is Error) AutomaticSetupFailedSheetContent(onRetryRequest)
+        else if(setupState is Error) AutomaticSetupFailedSheetContent(
+            enabledRetry = enabledRetry,
+            onRetryRequest = onRetryRequest
+        )
     }
 }
 
@@ -512,7 +552,7 @@ private fun AutomaticSetupSheet(
 private fun AutomaticSetupOngoingSheetContent(
     modifier: Modifier = Modifier
 ) {
-    AutomaticSetupSheetContentRow {
+    AutomaticSetupSheetContentRow(modifier = modifier) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -544,10 +584,11 @@ private fun AutomaticSetupOngoingSheetContent(
 
 @Composable
 private fun AutomaticSetupFailedSheetContent(
+    enabledRetry: Boolean = true,
     onRetryRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    AutomaticSetupSheetContentRow {
+    AutomaticSetupSheetContentRow(modifier = modifier) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -586,7 +627,10 @@ private fun AutomaticSetupFailedSheetContent(
                 .weight(2.5f)
                 .aspectRatio(1f)
         ) {
-            Button(onClick = onRetryRequest) {
+            Button(
+                enabled = enabledRetry,
+                onClick = onRetryRequest
+            ) {
                 Text(
                     text = stringResource(id = R.string.retry)          
                 )
@@ -608,5 +652,48 @@ private fun AutomaticSetupSheetContentRow(
             .then(modifier)
     ) {
         content()
+    }
+}
+
+@Composable
+private fun OfflineBanner(
+    visible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Popup(
+        alignment = Alignment.TopCenter,
+        onDismissRequest = {}
+    ) {
+        AnimatedVisibility(
+            visible = visible,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(
+                    durationMillis = 300,
+                    easing = FastOutSlowInEasing
+                )
+            ),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(
+                    durationMillis = 300,
+                    easing = FastOutSlowInEasing
+                )
+            )
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceDim)
+                    .statusBarsPadding()
+                    .then(modifier)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.offline_banner_message),
+                    fontSize = 12.sp
+                )
+            }
+        }
     }
 }
