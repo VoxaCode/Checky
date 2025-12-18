@@ -3,10 +3,6 @@ package com.voxacode.checky.auth.di
 import com.voxacode.checky.auth.data.repository.AuthRepositoryImpl
 import com.voxacode.checky.auth.domain.repository.AuthRepository
 
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
-
 import javax.inject.Singleton
 import dagger.Module
 import dagger.Provides
@@ -23,10 +19,4 @@ abstract class AuthModule {
     abstract fun bindAuthRepository(
         impl: AuthRepositoryImpl
     ): AuthRepository
-    
-    companion object {
-        @Provides
-        @Singleton
-        fun provideFirebaseAuth(): FirebaseAuth = Firebase.auth
-    }
 }

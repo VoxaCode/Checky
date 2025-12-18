@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,12 +45,14 @@ class AutomaticSetupViewModel @Inject constructor(
             try { 
                 _setupState.value = AutomaticSetupState.SetupOngoing
                 delay(1000)
-                authRepository.signInAnonymously()
+                authRepository.ensureSignedIn()
                 _setupState.value = AutomaticSetupState.SetupComplete
                 
+            } catch(ex: CancellationException) {
+                throw ex
             } catch(e: Exception) {
                 _setupState.value = AutomaticSetupState.Error(
-                    e.message ?: context.getString(R.string.unexpected_error_body)
+                    context.getString(R.string.unexpected_error_generic)
                 )
             }
         }
